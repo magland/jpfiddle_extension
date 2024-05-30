@@ -231,9 +231,23 @@ function activate(app: JupyterFrontEnd) {
               console.log('Ignoring non-text file:', file.path);
               continue;
             }
-            const xx = await app.serviceManager.contents.get(file.path);
-            console.log('----- test1', file, file.path, xx, xx.content);
-            const content = xx.content;
+            // This is tricky. Depending on the storage mechanism (memory or indexdb)
+            // the content may exist either in file.content or it needs to be
+            // fetched asynchronously using app.serviceManager.contents.get
+            let content = file.content;
+            if (content === null) {
+              const xx = await app.serviceManager.contents.get(file.path);
+              content = xx.content;
+              if (content === null) {
+                console.error(
+                  'Could not get content for file:',
+                  file.path,
+                  file,
+                  xx
+                );
+                continue;
+              }
+            }
             files.push({ path: file.path, content });
           }
         }
