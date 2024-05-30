@@ -34,7 +34,7 @@ function activate(app: JupyterFrontEnd) {
   // handle file changes
   app.serviceManager.contents.fileChanged.connect(async (sender, change) => {
     console.info('File changed:', change);
-    if (!fiddleId) {
+    if (fiddleId === undefined) {
       console.error('No fiddleId found in fileChanged event');
       return;
     }
@@ -48,7 +48,7 @@ function activate(app: JupyterFrontEnd) {
         console.warn('No file path found in fileChanged event');
         return;
       }
-      if (!fullPath.startsWith(fiddleId + '/')) {
+      if (fiddleId !== '' && !fullPath.startsWith(fiddleId + '/')) {
         console.warn(
           'File path does not start with fiddleId:',
           fullPath,
@@ -56,7 +56,7 @@ function activate(app: JupyterFrontEnd) {
         );
         return;
       }
-      const path = fullPath.slice(fiddleId.length + 1);
+      const path = fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
       console.log('File saved:', path, change);
       const vv = await app.serviceManager.contents.get(fullPath);
       window.parent.postMessage(
@@ -73,7 +73,7 @@ function activate(app: JupyterFrontEnd) {
         console.warn('No file path found in fileChanged event');
         return;
       }
-      if (!fullPath.startsWith(fiddleId + '/')) {
+      if (fiddleId !== '' && !fullPath.startsWith(fiddleId + '/')) {
         console.warn(
           'File path does not start with fiddleId:',
           fullPath,
@@ -81,7 +81,7 @@ function activate(app: JupyterFrontEnd) {
         );
         return;
       }
-      const path = fullPath.slice(fiddleId.length + 1);
+      const path = fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
       console.log('File deleted:', path, change);
       window.parent.postMessage(
         {
@@ -97,20 +97,24 @@ function activate(app: JupyterFrontEnd) {
         console.warn('No file path found in fileChanged event');
         return;
       }
-      if (
-        !oldFullPath.startsWith(fiddleId + '/') ||
-        !newFullPath.startsWith(fiddleId + '/')
-      ) {
+      if (fiddleId !== '' && !oldFullPath.startsWith(fiddleId + '/')) {
         console.warn(
           'File path does not start with fiddleId:',
-          oldFullPath,
+          oldFullPath,,
+          fiddleId
+        );
+        return;
+      }
+      if (fiddleId !== '' && !newFullPath.startsWith(fiddleId + '/')) {
+        console.warn(
+          'File path does not start with fiddleId:',
           newFullPath,
           fiddleId
         );
         return;
       }
-      const oldPath = oldFullPath.slice(fiddleId.length + 1);
-      const newPath = newFullPath.slice(fiddleId.length + 1);
+      const oldPath = fiddleId !== '' ? oldFullPath.slice(fiddleId.length + 1) : oldFullPath;
+      const newPath = fiddleId !== '' ? newFullPath.slice(fiddleId.length + 1) : newFullPath;
       console.log('File renamed:', oldPath, newPath, change);
       window.parent.postMessage(
         {
@@ -126,7 +130,7 @@ function activate(app: JupyterFrontEnd) {
         console.warn('No file path found in fileChanged event');
         return;
       }
-      if (!fullPath.startsWith(fiddleId + '/')) {
+      if (fiddleId !== '' && !fullPath.startsWith(fiddleId + '/')) {
         console.warn(
           'File path does not start with fiddleId:',
           fullPath,
@@ -134,7 +138,7 @@ function activate(app: JupyterFrontEnd) {
         );
         return;
       }
-      const path = fullPath.slice(fiddleId.length + 1);
+      const path = fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
       window.parent.postMessage(
         {
           type: 'file-created',
@@ -149,7 +153,7 @@ function activate(app: JupyterFrontEnd) {
 
   // helper functions
   const changeToFiddleDirectory = async () => {
-    if (!fiddleId) {
+    if (fiddleId === undefined) {
       console.error('No fiddleId found in changeToFiddleDirectory');
       return;
     }
@@ -185,16 +189,18 @@ function activate(app: JupyterFrontEnd) {
   };
 
   const postFilesToParent = async () => {
-    if (!fiddleId) {
+    if (fiddleId === undefined) {
       console.error('No fiddleId found in get-files event');
       return;
     }
     // check whether directory exists
-    try {
-      await app.serviceManager.contents.get(fiddleId);
-    } catch (error) {
-      window.parent.postMessage({ type: 'files', files: null }, '*');
-      return;
+    if (fiddleId !== '') {
+      try {
+        await app.serviceManager.contents.get(fiddleId);
+      } catch (error) {
+        window.parent.postMessage({ type: 'files', files: null }, '*');
+        return;
+      }
     }
     console.log('Getting files in directory:', fiddleId);
     const getFilesInDirectory = async (
@@ -223,7 +229,7 @@ function activate(app: JupyterFrontEnd) {
       await getFilesInDirectory(fiddleId);
     console.log('Sending files:', files);
     const files2 = files.map(f => ({
-      path: f.path.slice((fiddleId || '').length + 1),
+      path: fiddleId !== '' ? f.path.slice((fiddleId || '').length + 1) : f.path,
       content: f.content
     }));
     window.parent.postMessage({ type: 'files', files: files2 }, '*');
@@ -235,29 +241,31 @@ function activate(app: JupyterFrontEnd) {
     console.log('Message received in the iframe:', msg);
     if (msg.type === 'set-fiddle-id') {
       fiddleId = msg.fiddleId;
-      if (!fiddleId) {
+      if (fiddleId === undefined) {
         return;
       }
 
       changeToFiddleDirectory();
     } else if (msg.type === 'set-files') {
-      if (!fiddleId) {
+      if (fiddleId === undefined) {
         console.error('No fiddleId found in set-files event');
         return;
       }
       // create the fiddle directory if it doesn't exist
-      try {
-        await app.serviceManager.contents.get(fiddleId);
-      } catch (error) {
-        console.log('Creating directory:', fiddleId);
-        await app.serviceManager.contents.save(fiddleId, {
-          type: 'directory',
-          name: baseName(fiddleId)
-        });
+      if (fiddleId !== '') {
+        try {
+          await app.serviceManager.contents.get(fiddleId);
+        } catch (error) {
+          console.log('Creating directory:', fiddleId);
+          await app.serviceManager.contents.save(fiddleId, {
+            type: 'directory',
+            name: baseName(fiddleId)
+          });
+        }
       }
       const files = event.data.files;
       for (const file of files) {
-        const path = fiddleId + '/' + file.path;
+        const path = fiddleId !== '' ? fiddleId + '/' + file.path : file.path;
         if (path.split('/').length > 1) {
           await ensureDirectoryExists(
             app,
