@@ -198,11 +198,20 @@ function activate(app: JupyterFrontEnd) {
       console.error('No fiddleId found in get-files event');
       return;
     }
+
     // check whether directory exists
+    // if it doesn't, send null to signal that we should receive files
     if (fiddleId !== '') {
       try {
         await app.serviceManager.contents.get(fiddleId);
       } catch (error) {
+        window.parent.postMessage({ type: 'files', files: null }, '*');
+        return;
+      }
+    } else {
+      // check whether the directory is empty
+      const a = await app.serviceManager.contents.get('');
+      if (a.content.length === 0) {
         window.parent.postMessage({ type: 'files', files: null }, '*');
         return;
       }
