@@ -231,8 +231,9 @@ function activate(app: JupyterFrontEnd) {
               console.log('Ignoring non-text file:', file.path);
               continue;
             }
-            const content = (await app.serviceManager.contents.get(file.path))
-              .content;
+            const xx = await app.serviceManager.contents.get(file.path);
+            console.log('----- test1', file, file.path, xx, xx.content);
+            const content = xx.content;
             files.push({ path: file.path, content });
           }
         }
