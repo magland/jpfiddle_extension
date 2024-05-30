@@ -56,7 +56,8 @@ function activate(app: JupyterFrontEnd) {
         );
         return;
       }
-      const path = fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
+      const path =
+        fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
       console.log('File saved:', path, change);
       const vv = await app.serviceManager.contents.get(fullPath);
       window.parent.postMessage(
@@ -81,7 +82,8 @@ function activate(app: JupyterFrontEnd) {
         );
         return;
       }
-      const path = fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
+      const path =
+        fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
       console.log('File deleted:', path, change);
       window.parent.postMessage(
         {
@@ -100,7 +102,7 @@ function activate(app: JupyterFrontEnd) {
       if (fiddleId !== '' && !oldFullPath.startsWith(fiddleId + '/')) {
         console.warn(
           'File path does not start with fiddleId:',
-          oldFullPath,,
+          oldFullPath,
           fiddleId
         );
         return;
@@ -113,8 +115,10 @@ function activate(app: JupyterFrontEnd) {
         );
         return;
       }
-      const oldPath = fiddleId !== '' ? oldFullPath.slice(fiddleId.length + 1) : oldFullPath;
-      const newPath = fiddleId !== '' ? newFullPath.slice(fiddleId.length + 1) : newFullPath;
+      const oldPath =
+        fiddleId !== '' ? oldFullPath.slice(fiddleId.length + 1) : oldFullPath;
+      const newPath =
+        fiddleId !== '' ? newFullPath.slice(fiddleId.length + 1) : newFullPath;
       console.log('File renamed:', oldPath, newPath, change);
       window.parent.postMessage(
         {
@@ -138,7 +142,8 @@ function activate(app: JupyterFrontEnd) {
         );
         return;
       }
-      const path = fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
+      const path =
+        fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
       window.parent.postMessage(
         {
           type: 'file-created',
@@ -229,7 +234,8 @@ function activate(app: JupyterFrontEnd) {
       await getFilesInDirectory(fiddleId);
     console.log('Sending files:', files);
     const files2 = files.map(f => ({
-      path: fiddleId !== '' ? f.path.slice((fiddleId || '').length + 1) : f.path,
+      path:
+        fiddleId !== '' ? f.path.slice((fiddleId || '').length + 1) : f.path,
       content: f.content
     }));
     window.parent.postMessage({ type: 'files', files: files2 }, '*');
