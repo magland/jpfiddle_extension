@@ -59,12 +59,19 @@ function activate(app: JupyterFrontEnd) {
       const path =
         fiddleId !== '' ? fullPath.slice(fiddleId.length + 1) : fullPath;
       console.log('File saved:', path, change);
-      const vv = await app.serviceManager.contents.get(fullPath);
+      // This is tricky. Depending on the storage mechanism (memory or indexdb)
+      // the content may exist either in change.newValue.content or it needs to be
+      // fetched asynchronously using app.serviceManager.contents.get
+      let content = change.newValue.content;
+      if (content === null) {
+        const vv = await app.serviceManager.contents.get(fullPath);
+        content = vv.content;
+      }
       window.parent.postMessage(
         {
           type: 'file-saved',
           path,
-          content: vv.content
+          content
         },
         '*'
       );
