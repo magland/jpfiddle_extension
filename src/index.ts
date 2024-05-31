@@ -347,6 +347,9 @@ const isTextFilePath = (path: string) => {
     '.py',
     '.md',
     '.txt',
+    '.stan',
+    '.j2',
+    '.template',
     '.csv',
     '.json',
     '.html',
@@ -367,7 +370,14 @@ const isTextFilePath = (path: string) => {
     '.env',
     '.sh',
     '.bat',
-    '.cmd'
+    '.cmd',
+    'Makefile',
+    '.gitignore',
+    '.dockerignore',
+    '.gitattributes',
+    '.gitmodules',
+    '.gitconfig',
+    '.gitkeep'
   ];
   return extensions.some(ext => path.endsWith(ext));
 };
