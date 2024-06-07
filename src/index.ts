@@ -372,6 +372,7 @@ const isTextFilePath = (path: string) => {
     '.bat',
     '.cmd',
     'Makefile',
+    'Dockerfile',
     '.gitignore',
     '.dockerignore',
     '.gitattributes',
